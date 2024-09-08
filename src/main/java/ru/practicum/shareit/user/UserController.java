@@ -1,8 +1,9 @@
 package ru.practicum.shareit.user;
 
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -15,28 +16,29 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.validation.OnCreate;
 
 import java.util.Collection;
 
 @RestController
-@AllArgsConstructor
+@Validated
+@RequiredArgsConstructor
 @RequestMapping(path = "/users")
 public class UserController {
-    private UserService userService;
+    private final UserService userService;
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public Collection<UserDto> findAll() {
         return userService.findAll();
     }
 
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
     public UserDto getUserById(@PathVariable("id") Long id) {
         return userService.getUserById(id);
     }
 
     @PostMapping
+    @Validated({OnCreate.class})
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto create(@Valid @RequestBody UserDto userDto) {
         return userService.create(UserMapper.dtoToUser(userDto));

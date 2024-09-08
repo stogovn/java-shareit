@@ -7,8 +7,11 @@ import ru.practicum.shareit.GenerateId;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -17,22 +20,14 @@ import java.util.Objects;
 @Component
 public class InMemoryItemStorage extends GenerateId<Item> implements ItemStorage {
     private final Map<Long, Item> items = new HashMap<>();
-
+    private final Map<Long, List<Item>> itemsByUserId = new HashMap<>();
 
     @Override
     public Item create(Long userId, Item item) {
-        if (item.getName() == null || item.getName().trim().isEmpty()) {
-            throw new ValidationException("Имя не должно быть пустым");
-        }
-        if (item.getDescription() == null || item.getDescription().trim().isEmpty()) {
-            throw new ValidationException("Описание не должно быть пустым");
-        }
-        if (item.getAvailable() == null) {
-            throw new ValidationException("Available должен быть указан");
-        }
         item.setId(getNextId(items));
         item.setOwner(userId);
         items.put(item.getId(), item);
+        itemsByUserId.computeIfAbsent(item.getOwner(), k -> new ArrayList<>()).add(item);
         log.info("Добавилась новая вещь с id = {} пользователя с id = {}", item.getId(), userId);
 
         return item;
@@ -53,6 +48,11 @@ public class InMemoryItemStorage extends GenerateId<Item> implements ItemStorage
         if (item.getAvailable() != null) {
             oldItem.setAvailable(item.getAvailable());
         }
+        List<Item> userItems = itemsByUserId.get(userId);
+        int index = userItems.indexOf(oldItem);
+        if (index != -1) {
+            userItems.set(index, oldItem);
+        }
         log.info("Обновили вещь с id = {} пользователя с id = {}", item.getId(), userId);
 
         return oldItem;
@@ -65,9 +65,7 @@ public class InMemoryItemStorage extends GenerateId<Item> implements ItemStorage
 
     @Override
     public Collection<Item> getItemsByUserId(Long userId) {
-        return items.values().stream()
-                .filter(item -> item.getOwner().equals(userId))
-                .toList();
+        return itemsByUserId.getOrDefault(userId, Collections.emptyList());
     }
 
     @Override
