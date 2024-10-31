@@ -2,6 +2,7 @@ package ru.practicum.shareit.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,6 +21,7 @@ import ru.practicum.shareit.validation.OnCreate;
 
 import java.util.Collection;
 
+@Slf4j
 @RestController
 @Validated
 @RequiredArgsConstructor
@@ -41,12 +43,18 @@ public class UserController {
     @Validated({OnCreate.class})
     @ResponseStatus(HttpStatus.CREATED)
     public UserDto create(@Valid @RequestBody UserDto userDto) {
-        return userService.create(UserMapper.dtoToUser(userDto));
+        log.info("==> Creating user: {}", userDto);
+        UserDto user = userService.create(UserMapper.dtoToUser(userDto));
+        log.info("<== Creating user: {}", user);
+        return user;
     }
 
     @PatchMapping("/{id}")
     public UserDto update(@PathVariable("id") Long id, @Valid @RequestBody UserDto newUserDto) {
-        return userService.update(id, UserMapper.dtoToUser(newUserDto));
+        log.info("==> Updating user: {}", newUserDto);
+        UserDto user = userService.update(id, UserMapper.dtoToUser(newUserDto));
+        log.info("<== Updating user: {}", user);
+        return user;
     }
 
     @DeleteMapping("/{id}")
