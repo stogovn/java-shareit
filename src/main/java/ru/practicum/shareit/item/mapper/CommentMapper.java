@@ -1,30 +1,21 @@
 package ru.practicum.shareit.item.mapper;
 
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
-import java.time.LocalDateTime;
+@Mapper(componentModel = "spring")
+public interface CommentMapper {
 
-@Component
-public class CommentMapper {
-    public CommentDto toCommentDto(Comment comment) {
-        CommentDto dto = new CommentDto();
-        dto.setId(comment.getId());
-        dto.setText(comment.getText());
-        dto.setAuthorName(comment.getAuthor().getName());
-        dto.setCreated(comment.getCreated());
-        return dto;
-    }
+    @Mapping(target = "authorName", source = "author.name")
+    CommentDto toCommentDto(Comment comment);
 
-    public Comment toComment(CommentDto dto, Item item, User user) {
-        Comment comment = new Comment();
-        comment.setText(dto.getText());
-        comment.setItem(item);
-        comment.setAuthor(user);
-        comment.setCreated(LocalDateTime.now());
-        return comment;
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "created", expression = "java(java.time.LocalDateTime.now())")
+    @Mapping(target = "item", source = "item")
+    @Mapping(target = "author", source = "author")
+    Comment toComment(CommentDto dto, Item item, User author);
 }

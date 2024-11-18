@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import ru.practicum.shareit.booking.dto.BookingCreateDto;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.validation.OnCreate;
 
@@ -28,15 +28,14 @@ import java.util.List;
 @RequestMapping(path = "/bookings")
 public class BookingController {
     private final BookingService bookingService;
-    private final BookingMapper bookingMapper;
 
     @PostMapping
     @Validated({OnCreate.class})
     @ResponseStatus(HttpStatus.CREATED)
     public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
-                             @Valid @RequestBody BookingDto bookingDto) {
+                             @Valid @RequestBody BookingCreateDto bookingDto) {
         log.info("==> Creating booking: {}", bookingDto);
-        BookingDto booking = bookingService.create(userId, bookingMapper.dtoToBooking(userId, bookingDto));
+        BookingDto booking = bookingService.create(userId, bookingDto);
         log.info("<== Creating booking: {}", booking);
         return booking;
     }

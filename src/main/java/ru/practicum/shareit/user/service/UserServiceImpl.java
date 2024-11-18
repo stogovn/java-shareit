@@ -22,27 +22,30 @@ import java.util.Collection;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     @Transactional
     @Override
-    public UserDto create(User user) {
-        return UserMapper.toUserDto(userRepository.save(user));
+    public UserDto create(UserDto userDto) {
+        User user = userMapper.dtoToUser(userDto);
+        User savedUser = userRepository.save(user);
+        return userMapper.toUserDto(savedUser);
     }
 
     @Transactional
     @Override
-    public UserDto update(Long id, User newUser) {
+    public UserDto update(Long id, UserDto newUserDto) {
         User existingUser = userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
-        if (newUser.getEmail() != null && !existingUser.getEmail().equals(newUser.getEmail())) {
-            checkEmail(newUser.getEmail());
+        if (newUserDto.getEmail() != null && !existingUser.getEmail().equals(newUserDto.getEmail())) {
+            checkEmail(newUserDto.getEmail());
         }
-        if (newUser.getName() != null) {
-            existingUser.setName(newUser.getName());
+        if (newUserDto.getName() != null) {
+            existingUser.setName(newUserDto.getName());
         }
-        existingUser.setEmail(newUser.getEmail());
+        existingUser.setEmail(newUserDto.getEmail());
 
         User updateUser = userRepository.save(existingUser);
-        return UserMapper.toUserDto(updateUser);
+        return userMapper.toUserDto(updateUser);
     }
 
     @Override
@@ -54,14 +57,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserById(long id) {
         User user = userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
-        return UserMapper.toUserDto(user);
+        return userMapper.toUserDto(user);
     }
 
     @Override
     public Collection<UserDto> findAll() {
         return userRepository.findAll()
                 .stream()
-                .map(UserMapper::toUserDto)
+                .map(userMapper::toUserDto)
                 .toList();
     }
 

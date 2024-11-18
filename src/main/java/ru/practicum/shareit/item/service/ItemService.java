@@ -4,14 +4,13 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemBookingsDto;
 import ru.practicum.shareit.item.dto.ItemInfoDto;
-import ru.practicum.shareit.item.model.Item;
 
 import java.util.Collection;
 
 public interface ItemService {
-    ItemDto create(Long userId, Item item);
+    ItemDto create(Long userId, ItemDto itemDto);
 
-    ItemDto update(Long userId, Long id, Item item);
+    ItemDto update(Long userId, Long id, ItemDto itemDto);
 
     ItemInfoDto getItemById(Long userId, Long itemId);
 

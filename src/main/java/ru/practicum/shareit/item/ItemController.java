@@ -19,7 +19,6 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemBookingsDto;
 import ru.practicum.shareit.item.dto.ItemInfoDto;
-import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.validation.OnCreate;
 
@@ -33,7 +32,6 @@ import java.util.Collections;
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
-    private final ItemMapper itemMapper;
 
     @GetMapping
     public Collection<ItemBookingsDto> getAllItemsForUser(@RequestHeader("X-Sharer-User-Id") Long userId) {
@@ -52,7 +50,7 @@ public class ItemController {
     public ItemDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
                           @Valid @RequestBody ItemDto itemDto) {
         log.info("==> Creating item: {}", itemDto);
-        ItemDto item = itemService.create(userId, itemMapper.dtoToItem(userId, itemDto));
+        ItemDto item = itemService.create(userId, itemDto);
         log.info("<== Creating item: {}", item);
         return item;
     }
@@ -62,7 +60,7 @@ public class ItemController {
                           @PathVariable("itemId") Long id,
                           @Valid @RequestBody ItemDto itemDto) {
         log.info("==> Updating item with ID: {} for user ID: {}", id, userId);
-        ItemDto updatedItem = itemService.update(userId, id, itemMapper.dtoToItem(userId, itemDto));
+        ItemDto updatedItem = itemService.update(userId, id, itemDto);
         log.info("<== Updated item: {}", updatedItem);
         return updatedItem;
     }
@@ -81,7 +79,7 @@ public class ItemController {
     public CommentDto addComment(
             @RequestHeader("X-Sharer-User-Id") Long userId,
             @PathVariable Long itemId,
-            @RequestBody CommentDto commentDto) {
+            @RequestBody @Valid CommentDto commentDto) {
         return itemService.addComment(itemId, userId, commentDto);
     }
 }

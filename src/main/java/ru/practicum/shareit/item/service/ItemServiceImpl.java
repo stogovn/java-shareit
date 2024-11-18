@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.booking.dto.BookingDateDto;
+import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.ValidationException;
@@ -40,30 +42,32 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional
     @Override
-    public ItemDto create(Long userId, Item item) {
+    public ItemDto create(Long userId, ItemDto itemDto) {
         checkUserId(userId);
         User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
+        Item item = itemMapper.dtoToItem(itemDto, user);
         item.setOwner(user);
-        return itemMapper.toItemDto(itemRepository.save(item));
+        Item savedItem = itemRepository.save(item);
+        return itemMapper.toItemDto(savedItem);
     }
 
     @Transactional
     @Override
-    public ItemDto update(Long userId, Long id, Item item) {
+    public ItemDto update(Long userId, Long id, ItemDto itemDto) {
         checkUserId(userId);
         Item existingItem = itemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + id));
         if (!existingItem.getOwner().getId().equals(userId)) {
             throw new ValidationException("Данный пользователь не может редактировать эту вещь");
         }
-        if (item.getName() != null) {
-            existingItem.setName(item.getName());
+        if (itemDto.getName() != null) {
+            existingItem.setName(itemDto.getName());
         }
-        if (item.getDescription() != null) {
-            existingItem.setDescription(item.getDescription());
+        if (itemDto.getDescription() != null) {
+            existingItem.setDescription(itemDto.getDescription());
         }
-        if (item.getAvailable() != null) {
-            existingItem.setAvailable(item.getAvailable());
+        if (itemDto.getAvailable() != null) {
+            existingItem.setAvailable(itemDto.getAvailable());
         }
         Item updateItem = itemRepository.save(existingItem);
         return itemMapper.toItemDto(updateItem);
@@ -73,7 +77,13 @@ public class ItemServiceImpl implements ItemService {
     public Collection<ItemBookingsDto> getAllItemsForUser(Long userId) {
         List<Item> items = itemRepository.findAllByOwnerId(userId);
         return items.stream()
-                .map(itemMapper::toItemInfoDto)
+                .map(item -> {
+                    List<Booking> bookings = bookingRepository.findByItemId(item.getId());
+                    List<BookingDateDto> bookingDtos = bookings.stream()
+                            .map(b -> new BookingDateDto(b.getId(), b.getStart(), b.getEnd()))
+                            .toList();
+                    return itemMapper.toItemInfoDto(item, bookingDtos);
+                })
                 .toList();
     }
 
@@ -81,7 +91,26 @@ public class ItemServiceImpl implements ItemService {
     public ItemInfoDto getItemById(Long userId, Long itemId) {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Item not found"));
-        return itemMapper.toItemListInfoDto(userId, item);
+
+        List<Comment> comments = commentRepository.findByItemId(itemId);
+        List<CommentDto> commentDtos = comments.stream()
+                .map(commentMapper::toCommentDto)
+                .toList();
+
+        ItemInfoDto itemInfoDto = itemMapper.toItemListInfoDto(item, commentDtos);
+
+        // Заполнение ближайших бронирований только для владельца
+        if (item.getOwner().getId().equals(userId)) {
+            bookingRepository.findFirstByItemIdAndStartAfterOrderByStartAsc(itemId, LocalDateTime.now())
+                    .ifPresent(nextBooking -> itemInfoDto.setNextBooking(new BookingDateDto(nextBooking.getId(),
+                            nextBooking.getStart(), nextBooking.getEnd())));
+
+            bookingRepository.findFirstByItemIdAndEndBeforeOrderByEndDesc(itemId, LocalDateTime.now())
+                    .ifPresent(lastBooking -> itemInfoDto.setLastBooking(new BookingDateDto(lastBooking.getId(),
+                            lastBooking.getStart(), lastBooking.getEnd())));
+        }
+
+        return itemInfoDto;
     }
 
     @Override
