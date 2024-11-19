@@ -49,7 +49,7 @@ public class BookingServiceImpl implements BookingService {
         LocalDateTime start = bookingDto.getStart();
         LocalDateTime end = bookingDto.getEnd();
         List<Booking> conflictingBookings = bookingRepository.findByItemIdAndStartBeforeAndEndAfter(
-                item.getId(), end, start);
+                item.getId(), start, end);
         if (!conflictingBookings.isEmpty()) {
             throw new ValidationException("The item is already booked during the selected time period");
         }

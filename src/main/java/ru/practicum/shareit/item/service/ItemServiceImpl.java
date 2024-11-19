@@ -26,6 +26,8 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -75,11 +77,25 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemBookingsDto> getAllItemsForUser(Long userId) {
+        // Получаем все вещи пользователя
         List<Item> items = itemRepository.findAllByOwnerId(userId);
+        if (items.isEmpty()) {
+            return List.of(); // Если нет вещей, возвращаем пустую коллекцию
+        }
+
+        // Извлекаем все бронирования для этих вещей одним запросом
+        List<Long> itemIds = items.stream().map(Item::getId).toList();
+        List<Booking> bookings = bookingRepository.findByItemIdIn(itemIds);
+
+        // Группируем бронирования по itemId
+        Map<Long, List<Booking>> bookingsByItemId = bookings.stream()
+                .collect(Collectors.groupingBy(booking -> booking.getItem().getId()));
+
+        // Формируем результат
         return items.stream()
                 .map(item -> {
-                    List<Booking> bookings = bookingRepository.findByItemId(item.getId());
-                    List<BookingDateDto> bookingDtos = bookings.stream()
+                    List<Booking> itemBookings = bookingsByItemId.getOrDefault(item.getId(), List.of());
+                    List<BookingDateDto> bookingDtos = itemBookings.stream()
                             .map(b -> new BookingDateDto(b.getId(), b.getStart(), b.getEnd()))
                             .toList();
                     return itemMapper.toItemInfoDto(item, bookingDtos);
