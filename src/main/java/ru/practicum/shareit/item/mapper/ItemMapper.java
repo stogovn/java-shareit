@@ -1,33 +1,38 @@
 package ru.practicum.shareit.item.mapper;
 
+import org.mapstruct.Context;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import ru.practicum.shareit.booking.dto.BookingDateDto;
+import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemBookingsDto;
+import ru.practicum.shareit.item.dto.ItemInfoDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.model.User;
 
-public class ItemMapper {
+import java.util.List;
 
-    private ItemMapper() {
-        throw new IllegalStateException("Utility class");
-    }
+@Mapper(componentModel = "spring", uses = {CommentMapper.class})
+public interface ItemMapper {
 
-    public static ItemDto toItemDto(Item item) {
-        ItemDto itemDto = new ItemDto();
-        itemDto.setId(item.getId());
-        itemDto.setName(item.getName());
-        itemDto.setDescription(item.getDescription());
-        itemDto.setAvailable(item.getAvailable());
-        itemDto.setRequest(item.getRequest() != null ? item.getRequest() : null);
+    // Преобразование Item в ItemDto
+    @Named("toItemDto")
+    ItemDto toItemDto(Item item);
 
-        return itemDto;
-    }
+    // Преобразование ItemDto в Item
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "request", source = "itemDto.request")
+    Item dtoToItem(ItemDto itemDto, @Context User user);
 
-    public static Item dtoToItem(Long userId, ItemDto itemDto) {
-        Item item = new Item();
-        item.setId(itemDto.getId());
-        item.setName(itemDto.getName());
-        item.setDescription(itemDto.getDescription());
-        item.setAvailable(itemDto.getAvailable());
-        item.setOwner(userId);
-        item.setRequest(itemDto.getRequest() != null ? itemDto.getRequest() : null);
-        return item;
-    }
+    // Преобразование Item в ItemInfoDto
+    @Mapping(target = "nextBooking", ignore = true) // Будет заполняться вручную
+    @Mapping(target = "lastBooking", ignore = true) // Будет заполняться вручную
+    @Mapping(target = "comments", source = "comments")
+    ItemInfoDto toItemListInfoDto(Item item, List<CommentDto> comments);
+
+    // Преобразование Item в ItemBookingsDto
+    @Mapping(target = "bookings", source = "bookingDtos")
+    ItemBookingsDto toItemInfoDto(Item item, List<BookingDateDto> bookingDtos);
 }
