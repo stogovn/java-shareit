@@ -10,6 +10,7 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemBookingsDto;
 import ru.practicum.shareit.item.dto.ItemInfoDto;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public interface ItemMapper {
 
     // Преобразование ItemDto в Item
     @Mapping(target = "owner", ignore = true)
-    @Mapping(target = "request", source = "itemDto.request")
+    @Mapping(target = "request", source = "requestId", qualifiedByName = "mapRequestIdToItemRequest")
     Item dtoToItem(ItemDto itemDto, @Context User user);
 
     // Преобразование Item в ItemInfoDto
@@ -35,4 +36,15 @@ public interface ItemMapper {
     // Преобразование Item в ItemBookingsDto
     @Mapping(target = "bookings", source = "bookingDtos")
     ItemBookingsDto toItemInfoDto(Item item, List<BookingDateDto> bookingDtos);
+
+    @Named("mapRequestIdToItemRequest")
+    default ItemRequest mapRequestIdToItemRequest(Long requestId) {
+        if (requestId == null) {
+            return null; // Если requestId нет, ничего не мапим
+        }
+        // Создаем минимально допустимый объект ItemRequest с ID
+        ItemRequest request = new ItemRequest();
+        request.setId(requestId);
+        return request;
+    }
 }
