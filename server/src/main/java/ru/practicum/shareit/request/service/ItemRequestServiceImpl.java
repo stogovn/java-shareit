@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
@@ -32,12 +31,12 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private final ItemRequestRepository itemRequestRepository;
     private final ItemRepository itemRepository;
     private final ItemRequestMapper mapper;
-    private final ItemMapper itemMapper;
 
     @Transactional
     @Override
     public ItemRequestDto create(Long userId, ItemRequestDto itemRequestDto) {
-        User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         ItemRequest itemRequest = mapper.dtoToItemRequest(itemRequestDto, user);
         itemRequest.setCreated(LocalDateTime.now());
         itemRequest.setRequestor(user);
@@ -84,7 +83,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     public ItemsRequestDto getRequestById(Long requestId) {
         // Получаем запрос по ID
         ItemRequest request = itemRequestRepository.findById(requestId)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> new EntityNotFoundException("Request not found"));
 
         // Получаем все вещи, относящиеся к данному запросу, одним запросом
         List<Item> items = itemRepository.findByRequestId(requestId);

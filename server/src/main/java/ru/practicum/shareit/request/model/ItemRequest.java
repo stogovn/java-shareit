@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
+
 @Table(name = "requests")
 public class ItemRequest {
     @Id

@@ -101,6 +101,11 @@
 					<version>0.8.12</version>
 					<configuration>
 						<output>file</output>
+						<excludes>
+							<exclude>**/Q*.class</exclude>
+							<exclude>**/*.equals</exclude>
+							<exclude>**/*.hashCode</exclude>
+						</excludes>
 					</configuration>
 					<executions>
 						<execution>

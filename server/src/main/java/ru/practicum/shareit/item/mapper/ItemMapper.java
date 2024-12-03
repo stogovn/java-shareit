@@ -20,6 +20,7 @@ public interface ItemMapper {
 
     // Преобразование Item в ItemDto
     @Named("toItemDto")
+    @Mapping(source = "request.id", target = "requestId")
     ItemDto toItemDto(Item item);
 
     // Преобразование ItemDto в Item

@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
@@ -28,14 +29,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto create(UserDto userDto) {
         User user = userMapper.dtoToUser(userDto);
+        try {
         User savedUser = userRepository.save(user);
         return userMapper.toUserDto(savedUser);
+        } catch (DataIntegrityViolationException e) {
+            log.error("При попытке создания пользователя указан существующий email: {}", userDto.getEmail());
+            throw new ConflictException("Этот email уже используется");
+        }
     }
 
     @Transactional
     @Override
     public UserDto update(Long id, UserDto newUserDto) {
-        User existingUser = userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         if (newUserDto.getEmail() != null && !existingUser.getEmail().equals(newUserDto.getEmail())) {
             checkEmail(newUserDto.getEmail());
         }
@@ -56,7 +63,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(long id) {
-        User user = userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         return userMapper.toUserDto(user);
     }
 

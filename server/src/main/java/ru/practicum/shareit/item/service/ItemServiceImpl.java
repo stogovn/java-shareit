@@ -27,6 +27,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,7 +50,8 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto create(Long userId, ItemDto itemDto) {
         checkUserId(userId);
-        User user = userRepository.findById(userId).orElseThrow(EntityNotFoundException::new);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         Item item = itemMapper.dtoToItem(itemDto, user);
         item.setOwner(user);
         if (itemDto.getRequestId() != null) {
@@ -140,6 +142,10 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> searchItems(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            log.info("Запрос пустой, возвращаем пустой список");
+            return Collections.emptyList();
+        }
         return itemRepository.findItemsByText(text).stream()
                 .filter(Item::getAvailable)
                 .map(itemMapper::toItemDto)
@@ -161,9 +167,6 @@ public class ItemServiceImpl implements ItemService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Пользователь не найден"));
         LocalDateTime now = LocalDateTime.now();
-        log.info("add itemId:{}", itemId);
-        log.info("add userId:{}", userId);
-        log.info("add now:{}", now);
         boolean hasBooking = bookingRepository.existsByItemIdAndBookerIdAndEndBefore(itemId, userId, now);
         if (!hasBooking) {
             throw new ValidationException("Пользователь не может оставить комментарий, не бронировав товар");

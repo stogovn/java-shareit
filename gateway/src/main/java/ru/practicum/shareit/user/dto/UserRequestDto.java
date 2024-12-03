@@ -6,10 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.practicum.shareit.validation.OnCreate;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class UserRequestDto {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

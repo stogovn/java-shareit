@@ -48,4 +48,16 @@ public class ErrorHandler {
     public ErrorResponse handleNotFound(final NoHandlerFoundException e) {
         return new ErrorResponse(e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleIllegalArgumentException(final IllegalArgumentException e) {
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handleRuntimeException(final RuntimeException e) {
+        return new ErrorResponse(e.getMessage());
+    }
 }
