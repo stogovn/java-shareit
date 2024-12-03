@@ -29,7 +29,7 @@ class BookingRequestDtoTest {
         JsonContent<BookingRequestDto> result = json.write(bookingRequestDto);
 
         // Форматирование даты и времени для сравнения
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSS");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
         String formattedStart = bookingRequestDto.getStart().format(formatter);
         String formattedEnd = bookingRequestDto.getEnd().format(formatter);
 
