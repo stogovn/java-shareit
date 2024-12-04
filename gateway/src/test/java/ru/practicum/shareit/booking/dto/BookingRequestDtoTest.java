@@ -23,17 +23,19 @@ class BookingRequestDtoTest {
     void testSerializeBookingRequestDto() throws Exception {
         BookingRequestDto bookingRequestDto = new BookingRequestDto();
         bookingRequestDto.setItemId(1L);
-        bookingRequestDto.setStart(LocalDateTime.now().plusDays(1));
-        bookingRequestDto.setEnd(LocalDateTime.now().plusDays(2));
+        LocalDateTime start = LocalDateTime.of(2024, 12, 4, 10, 30);
+        LocalDateTime end = start.plusDays(1);
+
+        bookingRequestDto.setStart(start);
+        bookingRequestDto.setEnd(end);
 
         JsonContent<BookingRequestDto> result = json.write(bookingRequestDto);
 
-        // Форматирование даты и времени для сравнения
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
-        String formattedStart = bookingRequestDto.getStart().format(formatter);
-        String formattedEnd = bookingRequestDto.getEnd().format(formatter);
-
         // Сравниваем строки, а не объекты LocalDateTime
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        String formattedStart = start.format(formatter);
+        String formattedEnd = end.format(formatter);
+
         assertThat(result).extractingJsonPathNumberValue("$.itemId").isEqualTo(1);
         assertThat(result).extractingJsonPathStringValue("$.start").isEqualTo(formattedStart);
         assertThat(result).extractingJsonPathStringValue("$.end").isEqualTo(formattedEnd);

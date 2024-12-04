@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class ShareItServerTest {
     @Test
-    void contextLoads() {
+    void mainMethodTest() {
+        ShareItServer.main(new String[]{}); // Явный вызов метода main
     }
 }

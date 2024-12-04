@@ -9,12 +9,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.shareit.exception.ConflictException;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -39,7 +43,7 @@ class UserControllerTest {
         );
 
         // Настройка мока
-        Mockito.when(userService.findAll()).thenReturn(users);
+        when(userService.findAll()).thenReturn(users);
 
         // отправка GET-запроса и проверка результата
         mockMvc.perform(get("/users")
@@ -54,7 +58,7 @@ class UserControllerTest {
     @Test
     void testFindAllUsers_EmptyList() throws Exception {
         // Настройка мока для возвращения пустого списка
-        Mockito.when(userService.findAll()).thenReturn(Collections.emptyList());
+        when(userService.findAll()).thenReturn(Collections.emptyList());
 
         // отправка GET-запроса и проверка результата
         mockMvc.perform(get("/users")
@@ -70,7 +74,7 @@ class UserControllerTest {
         UserDto userDto = new UserDto(userId, "Alice", "alice@example.com");
 
         // Настройка мока для возвращения тестового пользователя
-        Mockito.when(userService.getUserById(userId)).thenReturn(userDto);
+        when(userService.getUserById(userId)).thenReturn(userDto);
 
         // отправка GET-запроса и проверка результата
         mockMvc.perform(get("/users/{id}", userId)
@@ -85,7 +89,7 @@ class UserControllerTest {
     void testGetUserById_NotFound() throws Exception {
         // настройка мока для выбрасывания исключения при поиске пользователя
         long userId = 1L;
-        Mockito.when(userService.getUserById(userId)).thenThrow(new EntityNotFoundException("User not found"));
+        when(userService.getUserById(userId)).thenThrow(new EntityNotFoundException("User not found"));
 
         // проверка, что выбрасывается исключение 404 Not Found
         mockMvc.perform(get("/users/{id}", userId)
@@ -100,7 +104,7 @@ class UserControllerTest {
         UserDto createdUserDto = new UserDto(1L, "John Doe", "johndoe@example.com");
 
         // Настройка мока для возвращения созданного пользователя
-        Mockito.when(userService.create(userDto)).thenReturn(createdUserDto);
+        when(userService.create(userDto)).thenReturn(createdUserDto);
 
         // отправка POST-запроса и проверка результата
         mockMvc.perform(post("/users")
@@ -113,6 +117,21 @@ class UserControllerTest {
     }
 
     @Test
+    void testCreateUser_EmailAlreadyExists() throws Exception {
+        UserDto userDto = new UserDto(null, "John Doe", "john.doe@example.com");
+
+        // Симулируем выброс ConflictException в сервисе
+        when(userService.create(any(UserDto.class)))
+                .thenThrow(new ConflictException("Этот email уже используется"));
+
+        mockMvc.perform(post("/users") // Укажите правильный URL для создания пользователя
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(userDto)))
+                .andExpect(status().isConflict()) // Проверяем, что возвращается 409 CONFLICT
+                .andExpect(jsonPath("$.error").value("Этот email уже используется")); // Проверяем тело ответа
+    }
+
+    @Test
     void testUpdateUser_Success() throws Exception {
         // подготовка тестовых данных
         Long userId = 1L;
@@ -120,7 +139,7 @@ class UserControllerTest {
         UserDto updatedUserDto = new UserDto(userId, "John Doe Updated", "john.doe.updated@example.com");
 
         // Настройка мока для возвращения обновленного пользователя
-        Mockito.when(userService.update(userId, newUserDto)).thenReturn(updatedUserDto);
+        when(userService.update(userId, newUserDto)).thenReturn(updatedUserDto);
 
         // отправка PATCH-запроса и проверка результата
         mockMvc.perform(patch("/users/{id}", userId)
@@ -139,7 +158,7 @@ class UserControllerTest {
         UserDto newUserDto = new UserDto(userId, "John Doe Updated", "john.doe.updated@example.com");
 
         // Настройка мока для выбрасывания исключения, если пользователь не найден
-        Mockito.when(userService.update(userId, newUserDto)).thenThrow(new EntityNotFoundException("User not found"));
+        when(userService.update(userId, newUserDto)).thenThrow(new EntityNotFoundException("User not found"));
 
         // проверка, что выбрасывается исключение 404 Not Found
         mockMvc.perform(patch("/users/{id}", userId)
@@ -155,7 +174,7 @@ class UserControllerTest {
         UserDto newUserDto = new UserDto(userId, "John Doe Updated", "invalid-email");
 
         // Настройка мока для выбрасывания исключения при обновлении пользователя
-        Mockito.when(userService.update(userId, newUserDto)).thenThrow(new IllegalArgumentException("Invalid email format"));
+        when(userService.update(userId, newUserDto)).thenThrow(new IllegalArgumentException("Invalid email format"));
 
         // проверка, что выбрасывается исключение 400 Bad Request
         mockMvc.perform(patch("/users/{id}", userId)
@@ -183,7 +202,7 @@ class UserControllerTest {
         Long userId = 1L;
 
         // Настройка мока для выбрасывания исключения, если пользователь не найден
-        Mockito.doThrow(new EntityNotFoundException("User not found")).when(userService).deleteUserById(userId);
+        Mockito.doThrow(new NotFoundException("User not found")).when(userService).deleteUserById(userId);
 
         // проверка, что выбрасывается исключение 404 Not Found
         mockMvc.perform(delete("/users/{id}", userId))
